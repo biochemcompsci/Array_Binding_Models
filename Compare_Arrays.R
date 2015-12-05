@@ -9,9 +9,9 @@ library(eVenn)
 verbose_progress <- as.logical(TRUE)
 
 # GPR Analysis Definition File
-gprAnalysisDefFile <- '/Volumes/Macintosh HD/Users/mattg/Dropbox/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/24NOV2015/Green_Channel_Chagas/Chagas_Panel_Condition_Specificity-2.xlsx'
+gprAnalysisDefFile <- '/Volumes/Macintosh HD/Users/mattg/Dropbox/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/24NOV2015/Green_Channel_Chagas/120min_incubation/sample_level/Chagas_Panel_Sample_Specificity-120_min.xlsx'
 
-quantileCutoffs <- sort(as.numeric(c(1:10)))
+quantileCutoffs <- sort(as.numeric(c(1:10)), decreasing = TRUE)
 
 gprDataDef <- read.xlsx(gprAnalysisDefFile, sheet = 1, colNames = TRUE)
 
@@ -159,13 +159,13 @@ for(currentAnalysisGroup in analysisGroups) {
 #     
 #    evenn(matLists=currQuantileBinaryMatrixNonZero, prop=TRUE, annot = TRUE, display=TRUE, pathRes=comparativeOutputDir, CompName=paste0(currQuantile, '_Quantile_Bin'))
     
-    evenn(matLists=currQuantileBinaryMatrix, prop=TRUE, annot = TRUE, display=TRUE, pathRes=comparativeOutputDir, CompName=paste0(currQuantile, '_Quantile_Bin'))
+    evenn(matLists=currQuantileBinaryMatrix[which(rowSums(currQuantileBinaryMatrix) != 0),], prop=TRUE, annot = TRUE, display=TRUE, pathRes=comparativeOutputDir, CompName=paste0(currQuantile, '_Quantile_Bin'))
     
     #******************!!!!!!!!!!!!*******************
     #vennDataPaths <- paste0(comparativeOutputDir, '/Venn_', currQuantile, '_Quantile_Bin/VennMatrixBin.txt')
     currVennPath <- paste0(comparativeOutputDir, '/Venn_', currQuantile, '_Quantile_Bin/VennMatrixBin.txt')
     
-    vennCSVTable <- read.csv(currVennPath,sep = "\t",header = TRUE)
+    vennCSVTable <- read.csv(currVennPath,sep = "\t",header = TRUE,stringsAsFactors = FALSE)
     
     #vennCSVTableLogical <- cbind(sampleIDs[vennCSVTable[,1]], vennCSVTable)
     #vennCSVTableLogical <- cbind(gprFiles@.Data[[4]]$ID[vennCSVTable[,1]], vennCSVTable)
@@ -175,6 +175,8 @@ for(currentAnalysisGroup in analysisGroups) {
     pairWiseCombn <- combn(pairWiseColNames,2)
     pairWiseCombnBinaryMatrix <- matrix(0, nrow = nrow(vennCSVTable), ncol = ncol(pairWiseCombn))
     pairWiseCombnBinaryMatrixColNames <- c()
+    maxSpecificOverlapCombnCount <- rep_len(1, ncol(pairWiseCombn))
+    maxSpecificOverlapCombnCountColNames <- c()
     
     for(currCombn in 1:ncol(pairWiseCombn)) {
       
@@ -184,6 +186,7 @@ for(currentAnalysisGroup in analysisGroups) {
     }
     
     colnames(pairWiseCombnBinaryMatrix) <- pairWiseCombnBinaryMatrixColNames
+    maxSpecificOverlapCombnCountColNames <- append(maxSpecificOverlapCombnCountColNames, pairWiseCombnBinaryMatrixColNames)
     
     vennCSVTableLogical <- cbind(vennCSVTableLogical, pairWiseCombnBinaryMatrix)
     
@@ -191,10 +194,13 @@ for(currentAnalysisGroup in analysisGroups) {
     
     if(length(vennCSVTable)-3 >= 3) {
       
+      maxSpecificOverlap <- 2
+      
       triplicateWiseColNames <- colnames(vennCSVTable)[2:(length(vennCSVTable)-1)]
       triplicateWiseCombn <- combn(triplicateWiseColNames,3)
       triplicateWiseCombnBinaryMatrix <- matrix(0, nrow = nrow(vennCSVTable), ncol = ncol(triplicateWiseCombn))
       triplicateWiseCombnBinaryMatrixColNames <- c()
+      maxSpecificOverlapCombnCount <- append(maxSpecificOverlapCombnCount, rep_len(2, ncol(triplicateWiseCombn)))
       
       for(currCombn in 1:ncol(triplicateWiseCombn)) {
         
@@ -204,6 +210,7 @@ for(currentAnalysisGroup in analysisGroups) {
       }
       
       colnames(triplicateWiseCombnBinaryMatrix) <- triplicateWiseCombnBinaryMatrixColNames
+      maxSpecificOverlapCombnCountColNames <- append(maxSpecificOverlapCombnCountColNames, triplicateWiseCombnBinaryMatrixColNames)
       
       vennCSVTableLogical <- cbind(vennCSVTableLogical, triplicateWiseCombnBinaryMatrix)
       
@@ -211,13 +218,15 @@ for(currentAnalysisGroup in analysisGroups) {
       
     }
     
+    #Not supporting more than triplicatewise combn at this point, uncomment to enable
     if(length(vennCSVTable)-3 > 3) {
       
       singleVsRemainderColNames <- colnames(vennCSVTable)[2:(length(vennCSVTable)-1)]
       singleVsRemainderCombn <- combn(singleVsRemainderColNames,(length(vennCSVTable)-3))
       singleVsRemainderCombnBinaryMatrix <- matrix(0, nrow = nrow(vennCSVTable), ncol = ncol(singleVsRemainderCombn))
       singleVsRemainderCombnBinaryMatrixColNames <- c()
-      
+      maxSpecificOverlapCombnCount <- append(maxSpecificOverlapCombnCount, rep_len((length(dataSetNames) - 1), ncol(singleVsRemainderCombn)))
+    
       for(currCombn in 1:ncol(singleVsRemainderCombn)) {
         
         singleVsRemainderCombnBinaryMatrix[,currCombn] <- as.numeric(apply(vennCSVTable[,singleVsRemainderCombn[,currCombn]],1,function(x) {all(x)}))
@@ -226,6 +235,7 @@ for(currentAnalysisGroup in analysisGroups) {
       }
       
       colnames(singleVsRemainderCombnBinaryMatrix) <- singleVsRemainderCombnBinaryMatrixColNames
+      maxSpecificOverlapCombnCountColNames <- append(maxSpecificOverlapCombnCountColNames, singleVsRemainderCombnBinaryMatrixColNames)
       
       vennCSVTableLogical <- cbind(vennCSVTableLogical, singleVsRemainderCombnBinaryMatrix)
       
@@ -233,7 +243,83 @@ for(currentAnalysisGroup in analysisGroups) {
       
     }
     
-    write.csv(vennCSVTableLogical[which(vennCSVTableLogical['Total'] != 0),], file = paste0(currVennPath, '_Quantile_', currQuantile, '_logicals.csv'), sep = "\t", col.names = TRUE, row.names = FALSE)
+    maxSpecificOverlapCombnCount <- t(maxSpecificOverlapCombnCount)
+    colnames(maxSpecificOverlapCombnCount) <- maxSpecificOverlapCombnCountColNames
+    
+    write.csv(vennCSVTableLogical, file = paste0(currVennPath, '_Quantile_', currQuantile, '_logicals.csv'), sep = "\t", col.names = TRUE, row.names = FALSE)
+    
+    # Calculate Specificity Totals for Each Sample Combination
+    
+    # In this Quantile for all samples
+    allSamplesSeqs <- matrix(data = NA, nrow = nrow(vennCSVTableLogical), ncol = 1)
+    currCombnSeqList <- as.vector(vennCSVTableLogical$X[which(vennCSVTableLogical$Total == length(dataSetNames))])
+    allSamplesSeqs <- append(currCombnSeqList, matrix(data = NA, nrow = (nrow(vennCSVTableLogical) - length(currCombnSeqList)), ncol = 1))
+    
+    # In this Quantile for only specific samples
+    specificSampleCols <- colnames(vennCSVTableLogical)[2:(length(dataSetNames)+1)]
+    specificSampleCols <- specificSampleCols[which(!is.na(specificSampleCols))]
+    
+    specificSampleLists <- matrix(data = NA, nrow = nrow(vennCSVTableLogical), ncol = length(dataSetNames))
+    colnames(specificSampleLists) <- specificSampleCols
+    
+    maxSpecificSampleCount <- 0
+    
+    for(currSampleCol in specificSampleCols) {
+      
+      currSampleSpecificIdxs <- as.logical(vennCSVTableLogical[,currSampleCol] == 1) & as.logical(rowSums(vennCSVTableLogical[,specificSampleCols]) == 1)
+      
+      currSampleSpecificSeqList <- as.vector(vennCSVTableLogical$X[currSampleSpecificIdxs])
+      
+      if(length(currSampleSpecificSeqList) > 0) {
+        
+        specificSampleLists[1:length(currSampleSpecificSeqList), currSampleCol] <- currSampleSpecificSeqList
+        
+        if(length(currSampleSpecificSeqList) > maxSpecificSampleCount) {
+          
+          maxSpecificSampleCount <- length(currSampleSpecificSeqList)
+          
+        }
+        
+      }
+      
+    }
+    
+    # In this Quantile for only specific sample combinations
+    combnCols <- colnames(vennCSVTableLogical)[length(dataSetNames)+3:ncol(vennCSVTableLogical)]
+    combnCols <- combnCols[which(!is.na(combnCols))]
+    
+    specificCombnLists <- matrix(data = NA, nrow = nrow(vennCSVTableLogical), ncol = length(combnCols))
+    colnames(specificCombnLists) <- combnCols
+    
+    maxCombnCount <- 0
+    
+    for(currCombnCol in combnCols) {
+      
+      currCombnIdxs <- as.logical(vennCSVTableLogical[,currCombnCol] == 1) & as.logical(rowSums(vennCSVTableLogical[,combnCols]) <= maxSpecificOverlapCombnCount[1,currCombnCol])
+      
+      currCombnSeqList <- as.vector(vennCSVTableLogical$X[currCombnIdxs])
+      
+      if(length(currCombnSeqList) > 0) {
+        
+        specificCombnLists[1:length(currCombnSeqList), currCombnCol] <- currCombnSeqList
+        
+        if(length(currCombnSeqList) > maxCombnCount) {
+          
+          maxCombnCount <- length(currCombnSeqList)
+          
+        }
+        
+      }
+      
+    }
+    
+    
+    specificCombnLists <- specificCombnLists[1:max(maxCombnCount,maxSpecificSampleCount),]
+    specificSampleLists <- specificSampleLists[1:max(maxCombnCount,maxSpecificSampleCount),]
+    
+    specificSeqsList <- cbind(specificSampleLists, specificCombnLists)
+    
+    write.csv(specificSeqsList, file = paste0(currVennPath, '_Quantile_', currQuantile, '_specific_seqs.csv'), sep = "\t", col.names = TRUE, row.names = FALSE)
     
   }
 
