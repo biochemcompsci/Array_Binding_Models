@@ -9,9 +9,9 @@ library(eVenn)
 verbose_progress <- as.logical(TRUE)
 
 # GPR Analysis Definition File
-gprAnalysisDefFile <- '/Volumes/Macintosh HD/Users/mattg/Dropbox/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/24NOV2015/Green_Channel_Chagas/120min_incubation/sample_level/Chagas_Panel_Sample_Specificity-120_min.xlsx'
+gprAnalysisDefFile <- '/Volumes/Macintosh HD/Users/mattg/Dropbox/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/04DEC2015/GPR_Data/Chagas_Panel_Sample_Specificity-60_min_10X.xlsx'
 
-quantileCutoffs <- sort(as.numeric(c(1:10)), decreasing = TRUE)
+quantileCutoffs <- sort(as.numeric(c(1:20)), decreasing = TRUE)
 
 gprDataDef <- read.xlsx(gprAnalysisDefFile, sheet = 1, colNames = TRUE)
 
@@ -24,8 +24,9 @@ for(currentAnalysisGroup in analysisGroups) {
   outputFile <- unique(gprDataDef$CSV_Output[gprDataDef$Analysis_Group == currentAnalysisGroup])
   dataSetNames <- unique(gprDataDef$Data_Set_Name[gprDataDef$Analysis_Group == currentAnalysisGroup])
   
-  arrayOutputFile <- paste0(outputFile, 'Analysis_Group_', currentAnalysisGroup, '_Array_Metrics.csv')
-  seqOutputFile <- paste0(outputFile, 'Analysis_Group_', currentAnalysisGroup, '_Seq_Metrics.csv')
+  arrayOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Array_Metrics.csv')
+  seqOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Seq_Metrics.csv')
+  quantileOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Quantile_Metrics.csv')
   
   if(!dir.exists(paste0(outputFile, '/plots')) ) {
     
@@ -80,6 +81,10 @@ for(currentAnalysisGroup in analysisGroups) {
     
   }
     
+  quantileMeans <- matrix(data = NA, nrow = length(dataSetNames), ncol = length(quantileCutoffs))
+  colnames(quantileMeans) <- quantileCutoffs
+  rownames(quantileMeans) <- dataSetNames
+  
   dataSetIdx <- 1
   
   for(currDataSet in dataSetNames) {
@@ -110,7 +115,9 @@ for(currentAnalysisGroup in analysisGroups) {
   
   rownames(gprDataZScoreScaled) <- paste0(sampleIDs, '_-_', sampleIndices)
   rownames(gprBackgroundZScoreScaled) <- paste0(sampleIDs, '_-_', sampleIndices)
-
+  
+  write.csv(gprDataZScoreScaled, file = arrayOutputFile, sep = "\t", col.names = TRUE, row.names = TRUE)
+  
   gprDataZScoreScaledQuantiles <- as.data.frame(gprDataZScoreScaled, stringsAsFactors = FALSE)
   
   dataSetIdx <- 1
@@ -124,6 +131,7 @@ for(currentAnalysisGroup in analysisGroups) {
   }
   
   quantileBins <- quantileCutoffs
+  
   vennDataPaths <- c()
   vennFeatureIDs <- c()
   vennFeatureIdxs <- c()
@@ -146,6 +154,9 @@ for(currentAnalysisGroup in analysisGroups) {
       # Venn Diagrams and Comparative Stats Output
       quantileIdxs <- which(gprDataZScoreScaledQuantiles[,dataSetIdx] == currQuantile)
       currQuantileBinaryMatrix[quantileIdxs,dataSetIdx] <- 1
+      
+      quantileMeans[dataSetIdx,as.character(currQuantile)] <- mean(gprDataZScoreScaled[quantileIdxs,dataSetIdx])
+      
 #       currQuantileBinaryMatrixIDs[quantileIdxs,dataSetIdx] <- sampleIDs[quantileIdxs]
 #       
       dataSetIdx <- dataSetIdx + 1
@@ -218,7 +229,6 @@ for(currentAnalysisGroup in analysisGroups) {
       
     }
     
-    #Not supporting more than triplicatewise combn at this point, uncomment to enable
     if(length(vennCSVTable)-3 > 3) {
       
       singleVsRemainderColNames <- colnames(vennCSVTable)[2:(length(vennCSVTable)-1)]
@@ -246,7 +256,7 @@ for(currentAnalysisGroup in analysisGroups) {
     maxSpecificOverlapCombnCount <- t(maxSpecificOverlapCombnCount)
     colnames(maxSpecificOverlapCombnCount) <- maxSpecificOverlapCombnCountColNames
     
-    write.csv(vennCSVTableLogical, file = paste0(currVennPath, '_Quantile_', currQuantile, '_logicals.csv'), sep = "\t", col.names = TRUE, row.names = FALSE)
+    #write.csv(vennCSVTableLogical, file = paste0(currVennPath, '_Quantile_', currQuantile, '_logicals.csv'), sep = "\t", col.names = TRUE, row.names = FALSE)
     
     # Calculate Specificity Totals for Each Sample Combination
     
@@ -322,5 +332,7 @@ for(currentAnalysisGroup in analysisGroups) {
     write.csv(specificSeqsList, file = paste0(currVennPath, '_Quantile_', currQuantile, '_specific_seqs.csv'), sep = "\t", col.names = TRUE, row.names = FALSE)
     
   }
+  
+  write.csv(quantileMeans, file = quantileOutputFile, sep = "\t", col.names = TRUE, row.names = TRUE)
 
 }
