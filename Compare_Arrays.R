@@ -9,7 +9,7 @@ library(eVenn)
 verbose_progress <- as.logical(TRUE)
 
 # GPR Analysis Definition File
-gprAnalysisDefFile <- '/Volumes/Macintosh HD/Users/mattg/Dropbox/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/04DEC2015/GPR_Data/Chagas_Panel_AB1_Specificity-60_min_10X.xlsx'
+gprAnalysisDefFile <- '/Volumes/Macintosh HD/Users/mattg/Dropbox/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/04DEC2015/GPR_Data/Chagas_Panel_AB1_Specificity-12_min_10X.xlsx'
 
 quantileCutoffs <- sort(as.numeric(c(1:40)), decreasing = TRUE)
 calculateSpecificSeqs <- as.logical(FALSE)
@@ -32,7 +32,7 @@ for(currentAnalysisGroup in analysisGroups) {
   seqOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Seq_Metrics.csv')
   quantileMeansOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Quantile_Means.csv')
   quantileMediansOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Quantile_Medians.csv')
-  
+  quantileCountsOutputFile <- paste0(outputFile, '/Analysis_Group_', currentAnalysisGroup, '_Quantile_Counts.csv')
   
   if(!dir.exists(paste0(outputFile, '/plots')) ) {
     
@@ -102,6 +102,10 @@ for(currentAnalysisGroup in analysisGroups) {
   quantileRawMedians <- matrix(data = NA, nrow = length(dataSetNames), ncol = length(quantileCutoffs))
   colnames(quantileRawMedians) <- quantileCutoffs
   rownames(quantileRawMedians) <- dataSetNames
+  
+  quantileCounts <- matrix(data = NA, nrow = length(dataSetNames), ncol = length(quantileCutoffs))
+  colnames(quantileCounts) <- quantileCutoffs
+  rownames(quantileCounts) <- dataSetNames
   
   dataSetIdx <- 1
   
@@ -179,6 +183,8 @@ for(currentAnalysisGroup in analysisGroups) {
       
       quantileMedians[dataSetIdx,as.character(currQuantile)] <- median(gprDataZScoreScaled[quantileIdxs,dataSetIdx])
       quantileRawMedians[dataSetIdx,as.character(currQuantile)] <- median(gprData[quantileIdxs,dataSetIdx])
+      
+      quantileCounts[dataSetIdx,as.character(currQuantile)] <- length(gprDataZScoreScaled[quantileIdxs,dataSetIdx])
       
 #       currQuantileBinaryMatrixIDs[quantileIdxs,dataSetIdx] <- sampleIDs[quantileIdxs]
 #       
@@ -370,5 +376,7 @@ for(currentAnalysisGroup in analysisGroups) {
   
   write.csv(quantileMedians, file = quantileMediansOutputFile, sep = "\t", col.names = TRUE, row.names = TRUE)
   write.csv(quantileRawMedians, file = paste0(quantileMediansOutputFile, "_raw.csv"), sep = "\t", col.names = TRUE, row.names = TRUE)
-
+  
+  write.csv(quantileCountsOutputFile, file = quantileMediansOutputFile, sep = "\t", col.names = TRUE, row.names = TRUE)
+  
 }
