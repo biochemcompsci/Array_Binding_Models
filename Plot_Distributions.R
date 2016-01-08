@@ -2,17 +2,17 @@ library(ggplot2)
 library(reshape2)
 library(dplyr)
 
-combine.df <- function(x, y) {
+combine.df <- function(x, y, fillVal) {
   rows.x <- nrow(x)
   rows.y <- nrow(y)
   if (rows.x > rows.y) {
     diff <- rows.x - rows.y
-    df.na <- matrix(NA, diff, ncol(y))
+    df.na <- matrix(fillVal, diff, ncol(y))
     colnames(df.na) <- colnames(y)
     cbind(x, rbind(y, df.na))
   } else {
     diff <- rows.y - rows.x
-    df.na <- matrix(NA, diff, ncol(x))
+    df.na <- matrix(fillVal, diff, ncol(x))
     colnames(df.na) <- colnames(x)
     cbind(rbind(x, df.na), y)
   }
@@ -57,22 +57,11 @@ for(currCol in sampleCols) {
   GT2_4 <- as.data.frame(as.numeric(currData2[,as.character(currCol)])[currData2[,as.character(currCol)] >= 4])
   GT2_8 <- as.data.frame(as.numeric(currData2[,as.character(currCol)])[currData2[,as.character(currCol)] >= 8])
   
-#   GT1_0 <- GT1_0/max(GT1_0[,1])
-#   GT1_1 <- GT1_1/max(GT1_1[,1])
-#   GT1_2 <- GT1_2/max(GT1_2[,1])
-#   GT1_4 <- GT1_4/max(GT1_4[,1])
-#   GT1_8 <- GT1_8/max(GT1_8[,1])
-#   GT2_0 <- GT2_0/max(GT2_0[,1])
-#   GT2_1 <- GT2_1/max(GT2_1[,1])
-#   GT2_2 <- GT2_2/max(GT2_2[,1])
-#   GT2_4 <- GT2_4/max(GT2_4[,1])
-#   GT2_8 <- GT2_8/max(GT2_8[,1])
-  
-  GT_0 <- combine.df(GT1_0,GT2_0)
-  GT_1 <- combine.df(GT1_1,GT2_1)
-  GT_2 <- combine.df(GT1_2,GT2_2)
-  GT_4 <- combine.df(GT1_4,GT2_4)
-  GT_8 <- combine.df(GT1_8,GT2_8)
+  GT_0 <- combine.df(GT1_0,GT2_0, -1)
+  GT_1 <- combine.df(GT1_1,GT2_1, -1)
+  GT_2 <- combine.df(GT1_2,GT2_2, -1)
+  GT_4 <- combine.df(GT1_4,GT2_4, -1)
+  GT_8 <- combine.df(GT1_8,GT2_8, -1)
   
   rm(GT1_0,GT2_0,GT1_1,GT2_1,GT1_2,GT2_2,GT1_4,GT2_4,GT1_8,GT2_8)
   
@@ -87,52 +76,19 @@ for(currCol in sampleCols) {
   GT2_4_Specific <- as.data.frame(as.numeric(currData2[,as.character(currCol)])[intersect(which(specificityRatioCurrData1[,as.character(currCol)] >= 2, arr.ind = TRUE),which(currData2[,as.character(currCol)] >= 4, arr.ind = TRUE))])
   GT2_8_Specific <- as.data.frame(as.numeric(currData2[,as.character(currCol)])[intersect(which(specificityRatioCurrData1[,as.character(currCol)] >= 2, arr.ind = TRUE),which(currData2[,as.character(currCol)] >= 8, arr.ind = TRUE))])
   
-#   GT1_0_Specific <- as.data.frame(as.numeric(specificityRatioCurrData1[,as.character(currCol)])[specificityRatioCurrData1[,as.character(currCol)] >= 0])
-#   GT1_1_Specific <- as.data.frame(as.numeric(specificityRatioCurrData1[,as.character(currCol)])[specificityRatioCurrData1[,as.character(currCol)] >= 1])
-#   GT1_2_Specific <- as.data.frame(as.numeric(specificityRatioCurrData1[,as.character(currCol)])[specificityRatioCurrData1[,as.character(currCol)] >= 2])
-#   GT1_4_Specific <- as.data.frame(as.numeric(specificityRatioCurrData1[,as.character(currCol)])[specificityRatioCurrData1[,as.character(currCol)] >= 4])
-#   GT1_8_Specific <- as.data.frame(as.numeric(specificityRatioCurrData1[,as.character(currCol)])[specificityRatioCurrData1[,as.character(currCol)] >= 8])
-#   GT2_0_Specific <- as.data.frame(as.numeric(specificityRatioCurrData2[,as.character(currCol)])[specificityRatioCurrData2[,as.character(currCol)] >= 0])
-#   GT2_1_Specific <- as.data.frame(as.numeric(specificityRatioCurrData2[,as.character(currCol)])[specificityRatioCurrData2[,as.character(currCol)] >= 1])
-#   GT2_2_Specific <- as.data.frame(as.numeric(specificityRatioCurrData2[,as.character(currCol)])[specificityRatioCurrData2[,as.character(currCol)] >= 2])
-#   GT2_4_Specific <- as.data.frame(as.numeric(specificityRatioCurrData2[,as.character(currCol)])[specificityRatioCurrData2[,as.character(currCol)] >= 4])
-#   GT2_8_Specific <- as.data.frame(as.numeric(specificityRatioCurrData2[,as.character(currCol)])[specificityRatioCurrData2[,as.character(currCol)] >= 8])
-#   
-#   GT1_0_Specific <- subset(GT1_0_Specific,!(GT1_0_Specific[[1]] > quantile(GT1_0_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT1_1_Specific <- subset(GT1_1_Specific,!(GT1_1_Specific[[1]] > quantile(GT1_1_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT1_2_Specific <- subset(GT1_2_Specific,!(GT1_2_Specific[[1]] > quantile(GT1_2_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT1_4_Specific <- subset(GT1_4_Specific,!(GT1_4_Specific[[1]] > quantile(GT1_4_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT1_8_Specific <- subset(GT1_8_Specific,!(GT1_8_Specific[[1]] > quantile(GT1_8_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT2_0_Specific <- subset(GT2_0_Specific,!(GT2_0_Specific[[1]] > quantile(GT2_0_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT2_1_Specific <- subset(GT2_1_Specific,!(GT2_1_Specific[[1]] > quantile(GT2_1_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT2_2_Specific <- subset(GT2_2_Specific,!(GT2_2_Specific[[1]] > quantile(GT2_2_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT2_4_Specific <- subset(GT2_4_Specific,!(GT2_4_Specific[[1]] > quantile(GT2_4_Specific[[1]], probs=c(.003, .997))[2]))
-#   GT2_8_Specific <- subset(GT2_8_Specific,!(GT2_8_Specific[[1]] > quantile(GT2_8_Specific[[1]], probs=c(.003, .997))[2]))
-#   
-#   GT1_0_Specific <- GT1_0_Specific/max(GT1_0_Specific[,1])
-#   GT1_1_Specific <- GT1_1_Specific/max(GT1_1_Specific[,1])
-#   GT1_2_Specific <- GT1_2_Specific/max(GT1_2_Specific[,1])
-#   GT1_4_Specific <- GT1_4_Specific/max(GT1_4_Specific[,1])
-#   GT1_8_Specific <- GT1_8_Specific/max(GT1_8_Specific[,1])
-#   GT2_0_Specific <- GT2_0_Specific/max(GT2_0_Specific[,1])
-#   GT2_1_Specific <- GT2_1_Specific/max(GT2_1_Specific[,1])
-#   GT2_2_Specific <- GT2_2_Specific/max(GT2_2_Specific[,1])
-#   GT2_4_Specific <- GT2_4_Specific/max(GT2_4_Specific[,1])
-#   GT2_8_Specific <- GT2_8_Specific/max(GT2_8_Specific[,1])
-#   
-  GT_0_Specific <- combine.df(GT1_0_Specific,GT2_0_Specific)
-  GT_1_Specific <- combine.df(GT1_1_Specific,GT2_1_Specific)
-  GT_2_Specific <- combine.df(GT1_2_Specific,GT2_2_Specific)
-  GT_4_Specific <- combine.df(GT1_4_Specific,GT2_4_Specific)
-  GT_8_Specific <- combine.df(GT1_8_Specific,GT2_8_Specific)
+  GT_0_Specific <- combine.df(GT1_0_Specific,GT2_0_Specific, -1)
+  GT_1_Specific <- combine.df(GT1_1_Specific,GT2_1_Specific, -1)
+  GT_2_Specific <- combine.df(GT1_2_Specific,GT2_2_Specific, -1)
+  GT_4_Specific <- combine.df(GT1_4_Specific,GT2_4_Specific, -1)
+  GT_8_Specific <- combine.df(GT1_8_Specific,GT2_8_Specific, -1)
   
   rm(GT1_0_Specific,GT2_0_Specific,GT1_1_Specific,GT2_1_Specific,GT1_2_Specific,GT2_2_Specific,GT1_4_Specific,GT2_4_Specific,GT1_8_Specific,GT2_8_Specific)
   
-  GT_0 <- combine.df(GT_0,GT_0_Specific)
-  GT_1 <- combine.df(GT_1,GT_1_Specific)
-  GT_2 <- combine.df(GT_2,GT_2_Specific)
-  GT_4 <- combine.df(GT_4,GT_4_Specific)
-  GT_8 <- combine.df(GT_8,GT_8_Specific)
+  GT_0 <- combine.df(GT_0,GT_0_Specific, -1)
+  GT_1 <- combine.df(GT_1,GT_1_Specific, -1)
+  GT_2 <- combine.df(GT_2,GT_2_Specific, -1)
+  GT_4 <- combine.df(GT_4,GT_4_Specific, -1)
+  GT_8 <- combine.df(GT_8,GT_8_Specific, -1)
   
   rm(GT_0_Specific,GT_1_Specific,GT_2_Specific,GT_4_Specific,GT_8_Specific)
   
@@ -142,38 +98,38 @@ for(currCol in sampleCols) {
   colnames(GT_4) <- c(paste0(currCol,"_3X"),paste0(currCol,"_10X"),paste0(currCol,"_3X_Specific"),paste0(currCol,"_10X_Specific"))
   colnames(GT_8) <- c(paste0(currCol,"_3X"),paste0(currCol,"_10X"),paste0(currCol,"_3X_Specific"),paste0(currCol,"_10X_Specific"))
   
-  GT_0_Long <- melt(GT_0)
-  GT_1_Long <- melt(GT_1)
-  GT_2_Long <- melt(GT_2)
-  GT_4_Long <- melt(GT_4)
-  GT_8_Long <- melt(GT_8)
+  GT_0_Long <- melt(GT_0, na.rm = TRUE)
+  GT_1_Long <- melt(GT_1, na.rm = TRUE)
+  GT_2_Long <- melt(GT_2, na.rm = TRUE)
+  GT_4_Long <- melt(GT_4, na.rm = TRUE)
+  GT_8_Long <- melt(GT_8, na.rm = TRUE)
   
   rm(GT_0,GT_1,GT_2,GT_4,GT_8)
   
   currPlot <- ggplot(data=GT_0_Long, aes(GT_0_Long[[2]], xmin=0, xmax=75, fill=variable)) +
     theme(axis.title = element_text(size = 5)) +
     geom_density(alpha=0.2) + xlab(paste0(currCol, currXLabel, " Z > 0"))
-  ggsave(paste0(plotDir,currCol, "_GT0_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 4.9, units = "in", dpi=150)
+  ggsave(paste0(plotDir,currCol, "_GT0_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 6.5, units = "in", dpi=200)
   
   currPlot <- ggplot(data=GT_1_Long, aes(GT_1_Long[[2]], xmin=0, xmax=75, fill=variable)) +
     theme(axis.title = element_text(size = 5)) +
     geom_density(alpha=0.2) + xlab(paste0(currCol, currXLabel, " Z > 1"))
-  ggsave(paste0(plotDir,currCol, "_GT1_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 4.9, units = "in", dpi=150)
+  ggsave(paste0(plotDir,currCol, "_GT1_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 6.5, units = "in", dpi=200)
   
   currPlot <- ggplot(data=GT_2_Long, aes(GT_2_Long[[2]], xmin=0, xmax=75, fill=variable)) +
     theme(axis.title = element_text(size = 5)) +
     geom_density(alpha=0.2) + xlab(paste0(currCol, currXLabel, " Z > 2"))
-  ggsave(paste0(plotDir,currCol, "_GT2_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 4.9, units = "in", dpi=150)
+  ggsave(paste0(plotDir,currCol, "_GT2_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 6.5, units = "in", dpi=200)
   
   currPlot <- ggplot(data=GT_4_Long, aes(GT_4_Long[[2]], xmin=0, xmax=75, fill=variable)) +
     theme(axis.title = element_text(size = 5)) +
     geom_density(alpha=0.2) + xlab(paste0(currCol, currXLabel, " Z > 4"))
-  ggsave(paste0(plotDir,currCol, "_GT4_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 4.9, units = "in", dpi=150)
+  ggsave(paste0(plotDir,currCol, "_GT4_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 6.5, units = "in", dpi=200)
   
   currPlot <- ggplot(data=GT_8_Long, aes(GT_8_Long[[2]], xmin=0, xmax=75, fill=variable)) +
     theme(axis.title = element_text(size = 5)) +
     geom_density(alpha=0.2) + xlab(paste0(currCol, currXLabel, " Z > 8"))
-  ggsave(paste0(plotDir,currCol, "_GT8_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 4.9, units = "in", dpi=150)
+  ggsave(paste0(plotDir,currCol, "_GT8_3X_10X_Specificity_Small.png"), plot = currPlot, height = 3.25, width = 6.5, units = "in", dpi=200)
   
 }
 
