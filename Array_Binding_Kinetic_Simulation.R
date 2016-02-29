@@ -44,7 +44,9 @@ timeSeries <- seq(0, 120, 0.5)
 # Compare Simulated to Experimental
 Chagas_OneTwenty_Min_10X_Unscaled.Combined_Specificity <- read.csv("~/Dropbox (Nextval)/HealthTell_MPG_PS/Research/Modeling/Experimental/Chagas/24NOV2015/GPR_Data/Green_Channel_Chagas/120_min_incubation/10X_Wash/sample_level/Chagas_OneTwenty_Min_10X_Unscaled-Combined_Specificity.csv", stringsAsFactors=FALSE)
 Chagas6041Specific <- Chagas_OneTwenty_Min_10X_Unscaled.Combined_Specificity[Chagas_OneTwenty_Min_10X_Unscaled.Combined_Specificity$Sample.ID == 'Chagas.G1.6041',1:4]
-ExperimentalData <- Chagas6041Specific
+Chagas6051Specific <- Chagas_OneTwenty_Min_10X_Unscaled.Combined_Specificity[Chagas_OneTwenty_Min_10X_Unscaled.Combined_Specificity$Sample.ID == 'Chagas.G2.6051',1:4]
+
+ExperimentalData <- Chagas6051Specific
 ExperimentalDataScaled <- ExperimentalData
 ExperimentalDataScaled$Raw.Mean <- ExperimentalDataScaled$Raw.Mean / max(ExperimentalDataScaled$Raw.Mean)
 
@@ -54,10 +56,10 @@ sampleSize <- nrow(ExperimentalData)
 
 dist1Weight <- 0.4
 #dist2Weight <- 0.
-dist1Mean <- 0.5
+dist1Mean <- 0.15
 dist2Mean <- 25
-dist1SD <- 1.0
-dist2SD <- 0.2
+dist1SD <- 1
+dist2SD <- 0.1
 min <- 0
 max <- 35
 
@@ -66,13 +68,13 @@ konSample <- generateBimodalDistribution("Norm", sampleSize, dist1Mean, dist2Mea
 plot(density(konSample))
 
 # Generate a Bimodal Distribution of Off-Rates Based on Experimental Observation
-dist1Weight <- 0.99
+dist1Weight <- 0.9999
 #dist2Weight <- 0.35
-dist1Mean <- 0.00001
-dist2Mean <- 0.0001
+dist1Mean <- 0.000005
+dist2Mean <- 0.0005
 dist1SD <- 2.5
-dist2SD <- 2
-min <- 0.000008
+dist2SD <- 3
+min <- 0.000003
 max <- 0.5
 
 koffSample <- generateBimodalDistribution("LogNorm", sampleSize, dist1Mean, dist2Mean, dist1SD, dist2SD, dist1Weight, min, max)
